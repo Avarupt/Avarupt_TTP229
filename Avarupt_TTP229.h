@@ -3,8 +3,11 @@
 
 #include "Arduino.h"
 #include "Wire.h"
+//#include "Bender.h"
 
 #define TTP229_LSF 0x57 // Device address (the addressing without the R/W bit) -> 01010111 = 57
+#define LONG_PRESS_MILLI_THRESHOLD 500
+#define LONG_PRESS_DISTANCE_THRESHOLD 1.5
 
 class Avarupt_TTP229{
   public:
@@ -14,35 +17,46 @@ class Avarupt_TTP229{
       position = 0;
 	  prevPosition = 0;
 	  rotaryPosition = 0;
-	  wammyPosition = 0;
 	  multiplier = 2;
 	  Wire.begin();
+	  onPressFunction = NULL;
+	  totalDistance = 0;
+	  touchMillis = 0;
+	  longTouchDetected = 0;
     }
-	
-	//I need to class and objectize all of my wammy position and rotary position things
 	
     byte getMostSignificantByte(){return aa;};
     byte getLeastSignificantByte(){return bb;};
-	byte getRotaryPosition(){return rotaryPosition;};
-    byte getWammyPosition(){return (byte)(fmod(wammyPosition,256));}; // objectize, add "max velocity" to protect against epilepsy
     double getPosition(){return position;};
 	bool isTouchDetected(){return touchDetected;};
     void showByteData();
+	void setOnPressCallbackFunction(void(*ptr2Func)(void)) {
+		onPressFunction = ptr2Func;
+	};
+	void setOnLongPressCallbackFunction(void(*ptr2Func)(void)) {
+		onLongPressFunction = ptr2Func;
+	};
+protected:
     void updateData();
   private:
     byte aa;
     byte bb;
-	float multiplier;//Rename this variable to be more specific
-    float position;
-	byte rotaryPosition;
-	float wammyPosition;
-	float prevPosition;
-	
+	float prevPosition;//DO NOT DELETE
 	bool touchDetected;
-	float pressPosition;
+	bool longTouchDetected;
+	float totalDistance;
+	unsigned long touchMillis;
+	
+	float multiplier;//delete
+    float position;
+	byte rotaryPosition;//delete
+	
     void getTTP229data(byte *a, byte *b);
     void printByte (byte bytePrint);
     double calculatePosition();
+
+	void(*onPressFunction)(void);//This function pointer returns void, takes in no arguments, and is called onPressFunction
+	void(*onLongPressFunction)(void);//This function pointer returns void, takes in no arguments, and is called onPressFunction
 };
 
 #endif

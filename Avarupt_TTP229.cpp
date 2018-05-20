@@ -6,15 +6,30 @@ void Avarupt_TTP229::updateData(){
   prevPosition = position;//the current position is about to be updated so set it as the previous position
   position = calculatePosition();
   
+  if (touchDetected) {
+	  totalDistance += abs(position - prevPosition);
+	  if (!longTouchDetected && millis() - touchMillis > LONG_PRESS_MILLI_THRESHOLD && totalDistance<=LONG_PRESS_DISTANCE_THRESHOLD) {
+		  longTouchDetected = true;
+		  if(onLongPressFunction!=NULL)
+			(*onLongPressFunction)();
+	  }
+  }
+
+
   //Because touchDetected has not been updatated yet, we can use it as a check to see if there has been a change during this updateData sequence
   if(position!=0&&!touchDetected){
-	pressPosition = position;//If there is at least one button pressed and touchDetected hasn't been set yet, update the pressed position
+	if (onPressFunction != NULL) {
+		(*onPressFunction)();
+	}
+	totalDistance = 0;
+	touchMillis = millis();
+	longTouchDetected = false;
   }
   touchDetected = position!=0; //Update touchDetected so that it is useful later
   
-  if(touchDetected){//If there was a touch detected, check for wammy movement and update the wammy position
-	wammyPosition += (position-pressPosition)/(8*multiplier);//this needs to be a specific multiplier
-  }
+ // if(touchDetected){//If there was a touch detected, check for wammy movement and update the wammy position
+	//wammyPosition += (position-pressPosition)/(8*multiplier);//this needs to be a specific multiplier
+ // }
   
   if(prevPosition!=0 && position!=0){//If the last two updates contain at least one button pressed in each one
 	rotaryPosition += round(multiplier*(position-prevPosition)); //change the rotaryPosition by the difference times a multiplier
