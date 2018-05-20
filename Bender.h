@@ -7,7 +7,6 @@
 class Bender : public Avarupt_TTP229{
 public:
 	Bender(float mult=2):multiplier(mult) {
-		pressPosition = 0;
 		currentPosition = 0;
 		
 	}
@@ -16,7 +15,7 @@ public:
 
 private:
 	float multiplier;
-	float pressPosition;
+	//float pressPosition;
 	float currentPosition;
 	
 };

@@ -5,19 +5,18 @@
 
 class Slider : public Avarupt_TTP229{
 public:
-	Slider(float mult=2):multiplier(mult) {
-		pressPosition = 0;
+	Slider(float mult = 8, bool longPressChangeMultiplier = true, float longPressMultiplier=.2) :multiplier(mult),longPressChangeSensitivity(longPressChangeMultiplier), changedMultiplier(longPressChangeMultiplier) {
 		currentPosition = 0;
-		onPressFunction = NULL;
+
 	}
 	void Poll();
-	byte getCurrentPosition() { return (byte)(fmod(currentPosition, 256)); };
-	void setOnPressCallbackFunction(void(*ptr2Func)(void)) {
-		onPressFunction = ptr2Func;
+	byte getCurrentPosition() {
+		return round(currentPosition);
 	};
 private:
 	float multiplier;
-	float pressPosition;
+	float changedMultiplier;
+	bool longPressChangeSensitivity;
 	float currentPosition;
 	void(*onPressFunction)(void);//This function pointer returns void, takes in no arguments, and is called onPressFunction
 

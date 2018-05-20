@@ -6,26 +6,6 @@ void Avarupt_TTP229::updateData() {
 	prevPosition = position;//the current position is about to be updated so set it as the previous position
 	position = calculatePosition();
 
-	if (touchDetected) {
-		totalDistance += floor(abs(position - prevPosition));
-		if (!longTouchDetected && millis() - touchMillis > LONG_PRESS_MILLI_THRESHOLD && totalDistance <= LONG_PRESS_DISTANCE_THRESHOLD) {
-			longTouchDetected = true;
-			canDoublePress = false;
-			 if (onLongPressFunction != NULL) {
-				(*onLongPressFunction)();
-
-				previousPressTimestamp = 0;
-			}
-			
-		}
-		if (!swipeDetected && millis() - touchMillis < SWIPE_MILLI_THRESHOLD && totalDistance > LONG_PRESS_DISTANCE_THRESHOLD) {
-			swipeDetected = true;
-			canDoublePress = false;
-			if (onSwipeFunction != NULL)
-				(*onSwipeFunction)();
-		}
-	}
-
 	//Falling Edge Touch detection
 	if (position == 0 && touchDetected) {
 		if (!pressDetected && !swipeDetected && millis() - touchMillis < LONG_PRESS_MILLI_THRESHOLD) {
@@ -33,7 +13,7 @@ void Avarupt_TTP229::updateData() {
 			canDoublePress = true;
 			if (canDoublePress &&previousPressTimestamp + DOUBLE_PRESS_MILLIS >= millis()) {
 				canDoublePress = false;
-				if(onDoublePressFunction!=NULL)
+				if (onDoublePressFunction != NULL)
 					(*onDoublePressFunction)();
 			}
 			else {
@@ -51,6 +31,8 @@ void Avarupt_TTP229::updateData() {
 	//Rising Edge Touch Detection
 	//Because touchDetected has not been updatated yet, we can use it as a check to see if there has been a change during this updateData sequence
 	if (position != 0 && !touchDetected) {
+		pressPosition = position;
+
 		if (onTouchFunction != NULL) {
 			(*onTouchFunction)();
 		}
@@ -59,16 +41,52 @@ void Avarupt_TTP229::updateData() {
 		longTouchDetected = false;
 		swipeDetected = false;
 		pressDetected = false;
-
+		canLongTouch = true;
 
 	}
 	touchDetected = position != 0; //Update touchDetected so that it is useful later
 
-	if (prevPosition != 0 && position != 0) {//If the last two updates contain at least one button pressed in each one
-		rotaryPosition += round(multiplier*(position - prevPosition)); //change the rotaryPosition by the difference times a multiplier
+
+
+	if (touchDetected) {
+		if (!longTouchDetected && millis() - touchMillis > LONG_PRESS_MILLI_THRESHOLD ) {
+			if (canLongTouch) {
+				longTouchDetected = true;
+				canDoublePress = false;
+				canLongTouch = false;
+				if (onLongPressFunction != NULL) {
+					(*onLongPressFunction)();
+					previousPressTimestamp = 0;
+				}
+			}
+			//else if(!swipeDetected){
+			//	swipeHelper();
+			//}
+			
+		}
+		if (!swipeDetected && millis() - touchMillis < SWIPE_MILLI_THRESHOLD&&abs(position - pressPosition)/((millis() - touchMillis)/1000+1)>=SWIPE_VELOCITY_THRESHOLD){ ///*totalDistance*/abs(position-pressPosition) > SWIPE_DISTANCE_THRESHOLD) {
+			swipeHelper();
+			//Serial.println();
+		}
 	}
+
+	if (canLongTouch && position!=0&& abs(position - pressPosition) > LONG_PRESS_DISTANCE_THRESHOLD) {
+		canLongTouch = false;
+	}
+
+
+
+
+
+
 }
 
+void Avarupt_TTP229::swipeHelper() {
+	swipeDetected = true;
+	canDoublePress = false;
+	if (onSwipeFunction != NULL)
+		(*onSwipeFunction)(prevPosition > pressPosition);
+}
 
 double Avarupt_TTP229::calculatePosition() {//This function calculates the position using a weighted average
 	double average = 0;
